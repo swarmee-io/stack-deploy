@@ -18,7 +18,14 @@ module Stack
   end
 
   def self.parse_compose(filename : String) : Compose
-    src = File.read(filename)
+    src = ""
+    if filename == "-"
+      src = String.build(256) do |io|
+        IO.copy(STDIN, io)
+      end
+    else
+      src = File.read(filename)
+    end
     compose = parse_compose_file(src)
 
     dir = File.dirname(filename)

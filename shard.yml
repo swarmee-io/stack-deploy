@@ -1,0 +1,17 @@
+name: stack
+version: 0.1.0
+
+authors:
+  - Source <source@swarmee.io>
+
+targets:
+  stack:
+    main: src/stack.cr
+
+dependencies:
+  admiral:
+    github: jwaldrip/admiral.cr
+
+crystal: 0.24.2
+
+license: MIT

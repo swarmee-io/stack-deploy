@@ -682,3 +682,34 @@ it "should parse publish all" do
     "nginx",
   ])
 end
+
+it "should generate envs as strings correctly" do
+  src = <<-END
+  ---
+  version: '3.3'
+  services:
+    etcd:
+      image: quay.io/coreos/etcd:latest
+      deploy:
+        endpoint_mode: dnsrr
+      environment:
+        - E=2
+        - SERVICE_IGNORE=1
+  END
+
+  result = Stack.parse_compose_file src
+  services = result.services
+
+  services.should_not be(nil)
+  services.empty?.should be_false
+  services["etcd"].get_cmd(stack_name: "istio").should eq([
+    "service", "create",
+    "--name", "istio_etcd",
+    "--network", "istio_default",
+    "--endpoint-mode", "dnsrr",
+    "--label", "com.docker.stack.namespace=istio",
+    "--env", "E=2",
+    "--env", "SERVICE_IGNORE=1",
+    "quay.io/coreos/etcd:latest",
+  ])
+end

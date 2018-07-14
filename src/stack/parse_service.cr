@@ -17,6 +17,7 @@ module Stack
     property endpoint_mode
     property mode
     property container_labels
+    property environment
     property publish_all
     property ports
     property cap_drop
@@ -41,6 +42,7 @@ module Stack
                    endpoint_mode : String = "vip",
                    mode : String = "replicated",
                    container_labels : Array(String) = [] of String,
+                   environment : Array(String) = [] of String,
                    publish_all : String = "false",
                    ports : Array(String) = [] of String,
                    cap_drop : String = "",
@@ -64,6 +66,7 @@ module Stack
       @endpoint_mode = endpoint_mode
       @mode = mode
       @container_labels = container_labels
+      @environment = environment
       @publish_all = publish_all
       @ports = ports
       @cap_drop = cap_drop
@@ -142,6 +145,11 @@ module Stack
         container_labels = container_labels + ["--container-label", "io.swarmee.privileged=true"]
       end
 
+      environment = [] of String
+      @environment.each do |env|
+        environment = environment + ["--env", env]
+      end
+
       ports = [] of String
 
       if @publish_all != "false"
@@ -209,6 +217,7 @@ module Stack
             mode +
             ["--label", "com.docker.stack.namespace=#{stack_name}"] +
             container_labels +
+            environment +
             init_containers +
             cap_drop +
             cap_add +
@@ -264,6 +273,26 @@ module Stack
           var = var.as(Hash(YAML::Type, YAML::Type))
           var.each do |k, v|
             container_labels << "#{k}=#{v}"
+          end
+        end
+      end
+    rescue KeyError
+    end
+
+    environment = [] of String
+    begin
+      var = service["environment"].as_a?
+      if var != nil
+        var = var.as(Array(YAML::Type))
+        var.each do |label|
+          environment << label.as(String)
+        end
+      else
+        var = service["environment"].as_h?
+        if var != nil
+          var = var.as(Hash(YAML::Type, YAML::Type))
+          var.each do |k, v|
+            environment << "#{k}=#{v}"
           end
         end
       end
@@ -482,6 +511,7 @@ module Stack
       endpoint_mode,
       mode,
       container_labels,
+      environment,
       publish_all,
       ports,
       cap_drop,

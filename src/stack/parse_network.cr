@@ -133,9 +133,9 @@ module Stack
     begin
       configs = network["ipam"]["config"].as_a
       configs.each do |config|
-        config = config.as(Hash(YAML::Type, YAML::Type))
+        # config = config.as(Hash(YAML::Type, YAML::Type))
         if config["subnet"]?
-          sub_nets << config["subnet"].as(String)
+          sub_nets << config["subnet"].as_s # (String)
         end
       end
     rescue KeyError
@@ -145,12 +145,13 @@ module Stack
     begin
       configs = network["ipam"]["config"].as_a
       configs.each do |config|
-        config = config.as(Hash(YAML::Type, YAML::Type))
-        if arr = config["ip_ranges"].as?(Array(YAML::Type))
-          arr.each do |ip_range|
-            ip_ranges << ip_range.as(String)
-          end
+        # config = config.as(Hash(YAML::Type, YAML::Type))
+        # if arr = config["ip_ranges"].as?(Array(YAML::Type))
+        arr = config["ip_ranges"].as_a
+        arr.each do |ip_range|
+          ip_ranges << ip_range.as_s # (String)
         end
+        # end
       end
     rescue KeyError
     end

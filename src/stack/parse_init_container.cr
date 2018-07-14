@@ -56,8 +56,8 @@ module Stack
     cap_add = ""
     begin
       if var = init_container["cap_add"].as_a?
-        var = var.as(Array(YAML::Type))
-        cap_add = var.join(",") { |cap| cap.as(String) }
+        # var = var.as(Array(YAML::Type))
+        cap_add = var.join(",") { |cap| cap.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -65,8 +65,8 @@ module Stack
     cap_drop = ""
     begin
       if var = init_container["cap_drop"].as_a?
-        var = var.as(Array(YAML::Type))
-        cap_drop = var.join(",") { |cap| cap.as(String) }
+        # var = var.as(Array(YAML::Type))
+        cap_drop = var.join(",") { |cap| cap.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -75,10 +75,10 @@ module Stack
     begin
       if var = init_container["command"].as_s?
         # TODO pass command lines
-        command << var.as(String)
+        command << var # (String)
       elsif var = init_container["command"].as_a?
         var.each do |v|
-          command << v.as(String)
+          command << v.as_s # (String)
         end
       end
     rescue KeyError

@@ -263,14 +263,14 @@ module Stack
     begin
       var = service["labels"].as_a?
       if var != nil
-        var = var.as(Array(YAML::Type))
+        var = var.as(Array(YAML::Any))
         var.each do |label|
-          container_labels << label.as(String)
+          container_labels << label.as_s # (String)
         end
       else
         var = service["labels"].as_h?
         if var != nil
-          var = var.as(Hash(YAML::Type, YAML::Type))
+          var = var.as(Hash(YAML::Any, YAML::Any))
           var.each do |k, v|
             container_labels << "#{k}=#{v}"
           end
@@ -283,14 +283,14 @@ module Stack
     begin
       var = service["environment"].as_a?
       if var != nil
-        var = var.as(Array(YAML::Type))
+        var = var.as(Array(YAML::Any))
         var.each do |label|
-          environment << label.as(String)
+          environment << label.as_s # (String)
         end
       else
         var = service["environment"].as_h?
         if var != nil
-          var = var.as(Hash(YAML::Type, YAML::Type))
+          var = var.as(Hash(YAML::Any, YAML::Any))
           var.each do |k, v|
             environment << "#{k}=#{v}"
           end
@@ -306,27 +306,27 @@ module Stack
     if service["networks"]? != nil
       var = service["networks"].as_a?
       if var != nil
-        var = var.as(Array(YAML::Type))
+        var = var.as(Array(YAML::Any))
         var.each do |network|
-          networks[network.as(String)] = network.as(String)
+          networks[network.as_s] = network.as_s # (String)
         end
       else
         var = service["networks"].as_h?
         if var != nil
-          var = var.as(Hash(YAML::Type, YAML::Type))
+          var = var.as(Hash(YAML::Any, YAML::Any))
           var.each do |network_name, v|
-            network_name = network_name.as(String)
+            network_name = network_name.as_s # (String)
             networks[network_name] = network_name
 
-            v = v.as(Hash(YAML::Type, YAML::Type))
+            v = v.as_h # (Hash(YAML::Any, YAML::Any))
             begin
-              aliases = v["aliases"].as(Array(YAML::Type))
-              network_aliases[network_name] = aliases.join(',') { |a| a.as(String) }
+              aliases = v["aliases"].as_a                                      # (Array(YAML::Any))
+              network_aliases[network_name] = aliases.join(',') { |a| a.as_s } # (String) }
             rescue KeyError
             end
 
             begin
-              network_ipv4[network_name] = v["ipv4_address"].as(String)
+              network_ipv4[network_name] = v["ipv4_address"].as_s # (String)
             rescue KeyError
             end
           end
@@ -369,8 +369,8 @@ module Stack
     init_containers = [] of String
     begin
       if var = service["init-containers"].as_a?
-        var = var.as(Array(YAML::Type))
-        init_containers = var.map { |c| c.as(String) }
+        var = var.as(Array(YAML::Any))
+        init_containers = var.map { |c| c.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -385,12 +385,12 @@ module Stack
     if service["ports"]? != nil
       var = service["ports"].as_a?
       if var != nil
-        var = var.as(Array(YAML::Type))
+        var = var.as(Array(YAML::Any))
         var.each do |port|
-          if port.is_a?(String)
-            ports << port.as(String)
-          elsif port.is_a?(Hash(YAML::Type, YAML::Type))
-            port = port.as(Hash(YAML::Type, YAML::Type))
+          if port.as_s?
+            ports << port.as_s
+          elsif port.as_h?   # is_a?(Hash(YAML::Any, YAML::Any))
+            port = port.as_h # (Hash(YAML::Any, YAML::Any))
             ports << port.join(",") { |k, v| "#{k}=#{v}" }
           end
         end
@@ -400,8 +400,8 @@ module Stack
     cap_drop = ""
     begin
       if var = service["cap_drop"].as_a?
-        var = var.as(Array(YAML::Type))
-        cap_drop = var.join(",") { |cap| cap.as(String) }
+        var = var.as(Array(YAML::Any))
+        cap_drop = var.join(",") { |cap| cap.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -409,8 +409,8 @@ module Stack
     cap_add = ""
     begin
       if var = service["cap_add"].as_a?
-        var = var.as(Array(YAML::Type))
-        cap_add = var.join(",") { |cap| cap.as(String) }
+        var = var.as(Array(YAML::Any))
+        cap_add = var.join(",") { |cap| cap.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -425,10 +425,10 @@ module Stack
     if service["volumes"]? != nil
       var = service["volumes"].as_a?
       if var != nil
-        var = var.as(Array(YAML::Type))
+        var = var.as(Array(YAML::Any))
         var.each do |volume|
-          if volume.is_a?(String)
-            src_n_dest = volume.as(String).split(":")
+          if volume.as_s?
+            src_n_dest = volume.as_s.split(":")
             if src_n_dest.size == 2
               volumes << "type=bind,source=#{src_n_dest[0]},destination=#{src_n_dest[1]}"
             elsif src_n_dest.size == 3
@@ -438,8 +438,8 @@ module Stack
                 volumes << "type=bind,source=#{src_n_dest[0]},destination=#{src_n_dest[1]},readonly=false"
               end
             end
-          elsif volume.is_a?(Hash(YAML::Type, YAML::Type))
-            volume = volume.as(Hash(YAML::Type, YAML::Type))
+          elsif volume.as_h?
+            volume = volume.as_h
             volumes << volume.join(",") { |k, v| "#{k}=#{v}" }
           end
         end
@@ -449,8 +449,8 @@ module Stack
     dns = [] of String
     begin
       if var = service["dns"].as_a?
-        var = var.as(Array(YAML::Type))
-        dns = var.map { |v| v.as(String) }
+        var = var.as(Array(YAML::Any))
+        dns = var.map { |v| v.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -458,8 +458,8 @@ module Stack
     dns_search = [] of String
     begin
       if var = service["dns_search"].as_a?
-        var = var.as(Array(YAML::Type))
-        dns_search = var.map { |v| v.as(String) }
+        var = var.as(Array(YAML::Any))
+        dns_search = var.map { |v| v.as_s } # (String) }
       end
     rescue KeyError
     end
@@ -468,12 +468,12 @@ module Stack
     if service["configs"]? != nil
       var = service["configs"].as_a?
       if var != nil
-        var = var.as(Array(YAML::Type))
+        var = var.as(Array(YAML::Any))
         var.each do |config|
-          config = config.as(Hash(YAML::Type, YAML::Type))
+          config = config.as_h # (Hash(YAML::Any, YAML::Any))
           configs << config.join(",") do |k, v|
             if k == "mode"
-              "#{k}=#{sprintf("%04o", v)}"
+              "#{k}=#{sprintf("%04o", v.as_i)}"
             elsif k == "source"
               "#{k}=%s_#{v}"
             else
@@ -488,10 +488,10 @@ module Stack
     begin
       if var = service["command"].as_s?
         # TODO pass command lines
-        command << var.as(String)
+        command << var
       elsif var = service["command"].as_a?
         var.each do |v|
-          command << v.as(String)
+          command << v.as_s # (String)
         end
       end
     rescue KeyError

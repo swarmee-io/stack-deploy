@@ -46,7 +46,7 @@ module Stack
 
     configs = compose["configs"]?
     if configs != nil
-      configs = configs.as(YAML::Any)
+      configs = configs.as(YAML::Any).as_h
       configs.each do |name, desc|
         name = name.as_s
         config = parse_config(name, desc)
@@ -59,7 +59,7 @@ module Stack
     networks = compose["networks"]?
     # if networks is explicit defined
     if networks != nil
-      networks = networks.as(YAML::Any)
+      networks = networks.as(YAML::Any).as_h
       networks.each do |net_name, net_desc|
         name = net_name.as_s
         net = parse_network(name, net_desc)
@@ -74,7 +74,7 @@ module Stack
 
     init_containers = compose["init-containers"]?
     if init_containers != nil
-      init_containers = init_containers.as(YAML::Any)
+      init_containers = init_containers.as(YAML::Any).as_h
       init_containers.each do |name, init_con_desc|
         val = parse_init_container(init_con_desc)
         if val != nil
@@ -83,7 +83,7 @@ module Stack
       end
     end
 
-    services = compose["services"]
+    services = compose["services"].as_h
     services.each do |svc_name, svc_desc|
       name = svc_name.as_s
       svc = parse_service(name, svc_desc)

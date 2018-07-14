@@ -1,0 +1,9 @@
+/docs/
+/lib/
+/bin/
+/.shards/
+.editorconfig
+.travis.yml
+shard.lock
+*.sublime*
+testcase/

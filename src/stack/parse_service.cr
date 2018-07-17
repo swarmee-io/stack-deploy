@@ -210,7 +210,7 @@ module Stack
 
       dns_opt = [] of String
       @dns_opt.each do |v|
-        dns_opt = dns_opt + ["--dns-opt", v]
+        dns_opt = dns_opt + ["--dns-option", v]
       end
 
       configs = [] of String

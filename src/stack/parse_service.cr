@@ -26,6 +26,7 @@ module Stack
     property volumes
     property dns
     property dns_search
+    property dns_opt
     property configs
     property command
 
@@ -51,6 +52,7 @@ module Stack
                    volumes : Array(String) = [] of String,
                    dns : Array(String) = [] of String,
                    dns_search : Array(String) = [] of String,
+                   dns_opt : Array(String) = [] of String,
                    configs : Array(String) = [] of String,
                    command : Array(String) = [] of String)
       @name = name
@@ -75,6 +77,7 @@ module Stack
       @volumes = volumes
       @dns = dns
       @dns_search = dns_search
+      @dns_opt = dns_opt
       @configs = configs
       @command = command
     end
@@ -205,6 +208,11 @@ module Stack
         dns_search = dns_search + ["--dns-search", v]
       end
 
+      dns_opt = [] of String
+      @dns_opt.each do |v|
+        dns_opt = dns_opt + ["--dns-opt", v]
+      end
+
       configs = [] of String
       @configs.each do |config|
         configs = configs + ["--config", sprintf(config, stack_name)]
@@ -226,6 +234,7 @@ module Stack
             volumes +
             dns +
             dns_search +
+            dns_opt +
             configs +
             [image] +
             @command
@@ -464,13 +473,22 @@ module Stack
     rescue KeyError
     end
 
+    dns_opt = [] of String
+    begin
+      if var = service["dns_opt"].as_a?
+        var = var.as(Array(YAML::Any))
+        dns_opt = var.map { |v| v.as_s }
+      end
+    rescue KeyError
+    end
+
     configs = [] of String
     if service["configs"]? != nil
       var = service["configs"].as_a?
       if var != nil
         var = var.as(Array(YAML::Any))
         var.each do |config|
-          config = config.as_h # (Hash(YAML::Any, YAML::Any))
+          config = config.as_h
           configs << config.join(",") do |k, v|
             if k == "mode"
               "#{k}=#{sprintf("%04o", v.as_i)}"
@@ -520,6 +538,7 @@ module Stack
       volumes,
       dns,
       dns_search,
+      dns_opt,
       configs,
       command,
     )

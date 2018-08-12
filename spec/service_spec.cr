@@ -739,7 +739,40 @@ it "should parse service dns, dns_search, and dns_opt" do
     "--label", "com.docker.stack.namespace=istio",
     "--dns", "10.32.88.88",
     "--dns-search", "service.consul",
-    "--dns-opt", "ndots:1",
+    "--dns-option", "ndots:1",
     "nginx",
+  ])
+end
+
+it "should parse service entrypoint" do
+  src = <<-END
+  version: '3.3'
+  services:
+    nginx:
+      image: nginx
+      dns:
+        - 10.32.88.88
+      dns_search:
+        - service.consul
+      dns_opt:
+        - 'ndots:1'
+      entrypoint: su
+      command: ["a","b","c"]
+  END
+
+  result = Stack.parse_compose_file src
+  services = result.services
+  services.should_not be(nil)
+  services.empty?.should be_false
+  services["nginx"].get_cmd(stack_name: "istio").should eq([
+    "service", "create",
+    "--name", "istio_nginx",
+    "--network", "istio_default",
+    "--label", "com.docker.stack.namespace=istio",
+    "--dns", "10.32.88.88",
+    "--dns-search", "service.consul",
+    "--dns-option", "ndots:1",
+    "--entrypoint", "su",
+    "nginx", "a", "b", "c",
   ])
 end

@@ -28,6 +28,7 @@ module Stack
     property dns_search
     property dns_opt
     property configs
+    property entrypoint
     property command
 
     def initialize(name : String,
@@ -54,6 +55,7 @@ module Stack
                    dns_search : Array(String) = [] of String,
                    dns_opt : Array(String) = [] of String,
                    configs : Array(String) = [] of String,
+                   entrypoint : String = "",
                    command : Array(String) = [] of String)
       @name = name
       @image = image
@@ -79,6 +81,7 @@ module Stack
       @dns_search = dns_search
       @dns_opt = dns_opt
       @configs = configs
+      @entrypoint = entrypoint
       @command = command
     end
 
@@ -87,18 +90,21 @@ module Stack
                 ref_networks = {} of String => Stack::Network) : Array(String)
       # TODO
       # if network is external, just use name, not stack name
+      # puts(">>>> stack name:   #{stack_name}")
+      # puts(">>>> ref networks: #{ref_networks}")
       networks = [] of String
+      # name2 is bug
       @networks.each do |name, real_name|
-        # puts("name = #{name}")
-        # puts("real_name = #{real_name}")
+        # puts(">>> name = #{name}")
+        # puts(">>> real_name = #{real_name}")
         ref = ref_networks[name]?
         if ref != nil
           ref = ref.as(Stack::Network)
           if ref.is_external
             # if it's external network, use its name directly
-            networks = networks + ["--network", "#{real_name}"]
+            networks = networks + ["--network", "#{ref.real_name}"]
           else
-            networks = networks + ["--network", "#{stack_name}_#{real_name}"]
+            networks = networks + ["--network", "#{stack_name}_#{ref.real_name}"]
           end
         else
           networks = networks + ["--network", "#{stack_name}_#{real_name}"]
@@ -218,6 +224,11 @@ module Stack
         configs = configs + ["--config", sprintf(config, stack_name)]
       end
 
+      entrypoint = [] of String
+      if @entrypoint != ""
+        entrypoint = ["--entrypoint", @entrypoint]
+      end
+
       cmd = ["service", "create"] +
             ["--name", "#{stack_name}_#{@name}"] +
             networks +
@@ -236,6 +247,7 @@ module Stack
             dns_search +
             dns_opt +
             configs +
+            entrypoint +
             [image] +
             @command
 
@@ -502,6 +514,12 @@ module Stack
       end
     end
 
+    entrypoint = ""
+    begin
+      entrypoint = service["entrypoint"].as_s
+    rescue KeyError
+    end
+
     command = [] of String
     begin
       if var = service["command"].as_s?
@@ -540,6 +558,7 @@ module Stack
       dns_search,
       dns_opt,
       configs,
+      entrypoint,
       command,
     )
   end

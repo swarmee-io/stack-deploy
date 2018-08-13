@@ -54,7 +54,7 @@ module Stack
                    dns : Array(String) = [] of String,
                    dns_search : Array(String) = [] of String,
                    dns_opt : Array(String) = [] of String,
-                   configs : Array(String) = [] of String,
+                   configs : Hash(String, String) = {} of String => String,
                    entrypoint : String = "",
                    command : Array(String) = [] of String)
       @name = name
@@ -87,7 +87,8 @@ module Stack
 
     def get_cmd(stack_name : String,
                 ref_init_containers = {} of String => Stack::InitContainer,
-                ref_networks = {} of String => Stack::Network) : Array(String)
+                ref_networks = {} of String => Stack::Network,
+                ref_configs = {} of String => Stack::Config) : Array(String)
       # TODO
       # if network is external, just use name, not stack name
       # puts(">>>> stack name:   #{stack_name}")
@@ -220,8 +221,17 @@ module Stack
       end
 
       configs = [] of String
-      @configs.each do |config|
-        configs = configs + ["--config", sprintf(config, stack_name)]
+      @configs.each do |name, config|
+        ref_config = ref_configs[name]
+        if ref_config.external == false
+          configs = configs + ["--config", sprintf(config, stack_name + "_" + name)]
+        else
+          if ref_config.real_name == ""
+            configs = configs + ["--config", sprintf(config, stack_name + "_" + name)]
+          else
+            configs = configs + ["--config", sprintf(config, ref_config.real_name)]
+          end
+        end
       end
 
       entrypoint = [] of String
@@ -256,8 +266,13 @@ module Stack
 
     def create(stack_name : String,
                ref_init_containers = {} of String => Stack::InitContainer,
-               ref_networks = {} of String => Stack::Network)
-      Process.run("docker", get_cmd(stack_name, ref_init_containers, ref_networks),
+               ref_networks = {} of String => Stack::Network,
+               ref_configs = {} of String => Stack::Config)
+      Process.run("docker",
+        get_cmd(stack_name,
+          ref_init_containers,
+          ref_networks,
+          ref_configs),
         input: STDIN,
         output: STDOUT,
         error: STDERR)
@@ -494,18 +509,19 @@ module Stack
     rescue KeyError
     end
 
-    configs = [] of String
+    configs = {} of String => String # [] of String
     if service["configs"]? != nil
       var = service["configs"].as_a?
       if var != nil
         var = var.as(Array(YAML::Any))
         var.each do |config|
           config = config.as_h
-          configs << config.join(",") do |k, v|
+          source = config["source"].as_s
+          configs[source] = config.join(",") do |k, v|
             if k == "mode"
               "#{k}=#{sprintf("%04o", v.as_i)}"
             elsif k == "source"
-              "#{k}=%s_#{v}"
+              "#{k}=%s"
             else
               "#{k}=#{v}"
             end

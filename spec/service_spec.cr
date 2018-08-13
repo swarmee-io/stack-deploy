@@ -501,6 +501,11 @@ describe Stack do
   it "should parse service with configs" do
     src = <<-END
     version: '3.3'
+
+    configs:
+      kubeconfig:
+        file: ./test
+
     services:
       nginx:
         image: nginx
@@ -514,7 +519,8 @@ describe Stack do
     services = result.services
     services.should_not be(nil)
     services.empty?.should be_false
-    services["nginx"].get_cmd(stack_name: "istio").should eq([
+    services["nginx"].get_cmd(stack_name: "istio",
+      ref_configs: result.configs).should eq([
       "service", "create",
       "--name", "istio_nginx",
       "--network", "istio_default",

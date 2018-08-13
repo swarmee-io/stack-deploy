@@ -35,7 +35,8 @@ module Stack
         puts("Creating service #{name} ...")
         service.create(stack_name,
           ref_init_containers: compose.init_containers,
-          ref_networks: compose.networks)
+          ref_networks: compose.networks,
+          ref_configs: compose.configs)
       end
     end
   end

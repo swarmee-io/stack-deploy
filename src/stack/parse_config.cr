@@ -6,15 +6,21 @@ module Stack
     property file
     property data
     property content_hash
+    property real_name
+    property external
 
     def initialize(name : String,
                    file : String,
                    data : String,
-                   content_hash : String)
+                   content_hash : String,
+                   real_name : String,
+                   external : Bool = false)
       @name = name
       @file = file
       @data = data
       @content_hash = content_hash
+      @real_name = real_name
+      @external = external
     end
 
     def get_cmd(stack_name : String)
@@ -26,6 +32,10 @@ module Stack
     end
 
     def create(dir : String, stack_name : String)
+      if @external == true
+        return
+      end
+
       if @data != ""
         stdin = IO::Memory.new(@data)
         Process.run("docker", get_cmd(stack_name),
@@ -44,6 +54,16 @@ module Stack
   end
 
   def self.parse_config(name : String, config : YAML::Any)
+    external = false
+    real_name = ""
+    begin
+      external = config["external"].raw.as(Bool)
+      if external
+        real_name = config["name"].as_s
+      end
+    rescue KeyError
+    end
+
     data = ""
     begin
       data = config["data"].as_s
@@ -65,7 +85,9 @@ module Stack
       name,
       file,
       data,
-      content_hash: "",
+      "",
+      real_name,
+      external
     )
   end
 end
